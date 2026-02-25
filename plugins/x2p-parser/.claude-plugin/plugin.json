@@ -1,7 +1,7 @@
 {
   "name": "x2p-compdb-parser",
   "version": "2.0.0",
-  "description": "自动解析高通 .x2p 工程文件，具备项目扫描、交互式配置提取，并为 Serena/clangd 生成极简配置的智能跨平台插件。",
+  "description": "自动解析高通.x2p工程文件，并跨平台为Serena/clangd生成compile_commands.json的智能插件",
   "author": {
     "name": "ADK Developer"
   }
