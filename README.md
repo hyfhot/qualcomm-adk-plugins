@@ -80,7 +80,7 @@ cp -r plugins/x2p-parser ~/.claude/plugins/x2p-parser
 3. **MCP 服务自动启动**：
    - 插件包含 `.mcp.json` 配置文件
    - Claude Code 启动时会自动运行 `uv run --with mcp x2p_compdb_mcp.py`
-   - MCP 服务启动后，您可以使用 `generate_optimized_clangd_config` 工具
+   - MCP 服务启动后，您可以使用 `generate_clangd_config` 工具
 
 ---
 
@@ -160,7 +160,7 @@ root_dir = "/path/to/adk/root"
 x2p_file_path = "/path/to/project.x2p"
 ```
 
-#### 3. generate_optimized_clangd_config - 生成配置（核心）
+#### 3. generate_clangd_config - 生成配置（核心）
 解析 x2p 生成 compile_commands.json 和 .clangd，并隔离无关子项目。
 
 ```python
@@ -321,7 +321,7 @@ qualcomm-adk-plugins/
 |--------|------|
 | `scan_adk_projects` | 扫描 ADK 根目录，返回所有 .x2p 项目 |
 | `get_x2p_configs` | 解析 .x2p 文件，返回可用配置列表 |
-| `generate_optimized_clangd_config` | 核心配置生成器（含缓存） |
+| `generate_clangd_config` | 核心配置生成器（含缓存） |
 
 ---
 

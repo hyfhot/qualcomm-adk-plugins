@@ -65,7 +65,7 @@ def get_x2p_configs(x2p_file_path: str) -> str:
         return f"解析工程文件异常: {str(e)}"
 
 @mcp.tool()
-def generate_optimized_clangd_config(x2p_file_path: str = None, output_dir: str = None, config_name: str = None) -> str:
+def generate_clangd_config(x2p_file_path: str = None, output_dir: str = None, config_name: str = None) -> str:
     """
     核心配置生成器：解析 x2p 生成 compile_commands.json 和 .clangd，并隔离无关子项目。
     内置智能缓存机制，仅在工程文件变更或切换项目时重新生成，并自动更新 .gitignore。
