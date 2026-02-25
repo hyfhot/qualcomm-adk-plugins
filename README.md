@@ -35,7 +35,7 @@
 1. 在 Claude Code 中运行命令添加插件源：
 ```bash
 # 克隆仓库
-git clone https://github.com/your-repo/qualcomm-adk-plugins.git
+git clone https://github.com/hyfhot/qualcomm-adk-plugins.git
 cd qualcomm-adk-plugins
 ```
 
@@ -48,7 +48,7 @@ cd qualcomm-adk-plugins
 
 1. 克隆仓库：
 ```bash
-git clone https://github.com/your-repo/qualcomm-adk-plugins.git
+git clone https://github.com/hyfhot/qualcomm-adk-plugins.git
 cd qualcomm-adk-plugins
 ```
 
