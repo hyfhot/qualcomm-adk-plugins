@@ -4,15 +4,18 @@
 
 ## 插件列表
 
-### x2p-compdb-parser
+### x2p-compdb-parser (v2.0.0)
 
-自动解析高通 `.x2p` 工程文件，并跨平台为 Serena/clangd 生成 `compile_commands.json` 的智能插件。
+自动解析高通 `.x2p` 工程文件，具备项目扫描、交互式配置提取，并为 Serena/clangd 生成极简配置的智能跨平台插件。
 
 **核心功能：**
-- 解析 `.x2p` 工程配置文件，提取宏定义和头文件路径
-- 生成极简版 `compile_commands.json`，消除冗余
-- 动态生成 `.clangd` 文件，全局注入宏定义
-- 智能屏蔽无关 ADK 子项目，避免符号污染
+- **项目扫描** (`scan_adk_projects`) - 自动扫描 ADK 根目录，列出所有可用 .x2p 项目
+- **配置提取** (`get_x2p_configs`) - 解析 .x2p 文件，获取所有可用配置名称（如 TRAN03H）
+- **智能缓存** - 内置极速缓存校验机制，仅在工程文件变更时重新生成
+- **自动忽略** - 自动将生成的配置文件加入 .gitignore
+- **环境变量支持** - 支持通过 ADK_ACTIVE_X2P、ADK_ACTIVE_CONFIG 环境变量配置
+- **极简配置** - 生成极简版 compile_commands.json，消除冗余
+- **动态隔离** - 智能屏蔽无关 ADK 子项目，避免符号污染
 
 ---
 
@@ -141,29 +144,53 @@ rm -f /path/to/adk/project/compile_commands.json
 
 ### 方式一：直接调用 MCP 工具
 
-当插件启用后，可以使用 `generate_optimized_clangd_config` 工具：
+插件提供三个 MCP 工具：
+
+#### 1. scan_adk_projects - 扫描项目
+扫描 ADK 根目录，返回所有可用的 `.x2p` 项目文件路径。
 
 ```python
-# 调用 generate_optimized_clangd_config 工具
+root_dir = "/path/to/adk/root"
+```
+
+#### 2. get_x2p_configs - 获取配置
+解析指定的 `.x2p` 文件，返回所有可用的配置名称。
+
+```python
+x2p_file_path = "/path/to/project.x2p"
+```
+
+#### 3. generate_optimized_clangd_config - 生成配置（核心）
+解析 x2p 生成 compile_commands.json 和 .clangd，并隔离无关子项目。
+
+```python
+# 方式A：直接传参
 x2p_file_path = "/path/to/project.x2p"
 output_dir = "/path/to/adk/root"
 config_name = None  # 使用默认配置
+
+# 方式B：通过环境变量（推荐）
+# 设置环境变量后无需传参
+# ADK_ACTIVE_X2P=/path/to/project.x2p
+# ADK_ROOT_DIR=/path/to/adk/root
+# ADK_ACTIVE_CONFIG=TRAN03H
 ```
 
 **参数说明：**
-- `x2p_file_path`：`.x2p` 工程文件的绝对路径
-- `output_dir`：ADK 项目根目录的绝对路径
-- `config_name`：配置名称（可选，留空使用默认配置）
+- `x2p_file_path`：`.x2p` 工程文件的绝对路径（支持环境变量 ADK_ACTIVE_X2P）
+- `output_dir`：ADK 项目根目录的绝对路径（支持环境变量 ADK_ROOT_DIR）
+- `config_name`：配置名称（支持环境变量 ADK_ACTIVE_CONFIG）
 
 ### 方式二：使用工作流技能
 
 当分析 ADK C/C++ 代码时，工作流会自动：
-1. 检测运行环境（跨平台路径处理）
-2. 调用 x2p 解析工具生成配置
-3. 执行防崩检查
-4. 调用 Serena 进行深度代码分析
+1. **项目指纹确认** - 快速检测是否为高通 ADK 项目
+2. **跨平台路径处理** - WSL/Windows 路径转换
+3. **交互式选择** - 扫描并让用户选择目标项目和配置
+4. **环境同步** - 调用解析工具生成配置（含智能缓存）
+5. **符号解析** - 调用 Serena 进行深度代码分析
 
-**触发条件**：当用户要求分析、阅读、重构 C/C++ 代码，或者询问底层架构、PIO 宏定义等问题时，工作流会自动触发。
+**触发条件**：当用户要求分析、阅读、重构 C/C++ 代码，且项目包含 `adk/`、`application_common/` 等高通特征目录时自动触发。
 
 ---
 
@@ -171,7 +198,7 @@ config_name = None  # 使用默认配置
 
 ### 工作原理
 
-本插件采用分层架构解决 ADK 项目代码分析的三大难题：
+本插件采用分层架构 + 智能缓存解决 ADK 项目代码分析的难题：
 
 #### 1. 极简 compile_commands.json
 
@@ -185,6 +212,21 @@ compile_commands.json：仅包含文件列表，无冗余
 **优化效果**：
 - 文件体积减少 95%+
 - clangd 启动速度提升 10 倍+
+
+#### 2. 智能缓存机制
+
+插件内置极速缓存校验：
+- 首次生成后创建 `.x2p_parser_cache.json` 缓存文件
+- 再次调用时自动检测 x2p 文件的修改时间 (mtime)
+- 若文件未变更，直接返回 "缓存命中"，跳过生成步骤
+- 确保每次分析前环境同步，同时避免重复计算
+
+#### 3. 自动 .gitignore 管理
+
+插件自动将生成的配置文件加入 .gitignore：
+- `.clangd`
+- `compile_commands.json`
+- `.x2p_parser_cache.json`
 
 #### 2. 动态 .clangd 配置
 
@@ -232,12 +274,16 @@ ADK 是庞大的 Monorepo，包含 headset、earbuds、speakers 等多个子项�
 
 ### 输出示例
 
-运行成功后，会返回：
+#### 首次生成
 ```
-执行成功！
-1. 生成极简 compile_commands.json，包含 42 个文件，已彻底剔除重复冗余。
-2. 生成 .clangd，全局注入 15 个宏和 8 个包含路径。
-3. 动态计算排除名单：通过交叉比对源文件与 INCPATHS，已安全屏蔽 3 个无关项目目录（如其它 application 或未引用的 topologies）。
+执行成功！(缓存与 .gitignore 已更新)
+1. 目标工程：headset.x2p (配置: TRAN03H)
+2. 成功生成/刷新了极简 compile_commands.json 与 .clangd，并屏蔽了 3 个无关项目目录。
+```
+
+#### 缓存命中（极速跳过）
+```
+⚡ 【缓存命中】已检测到 headset.x2p (配置: TRAN03H) 未发生变更，跳过生成步骤，可直接进行代码分析。
 ```
 
 ---
@@ -266,8 +312,16 @@ qualcomm-adk-plugins/
 |------|------|
 | `plugin.json` | 插件元数据（名称、版本、描述） |
 | `.mcp.json` | MCP 服务器配置，定义工具入口 |
-| `x2p_compdb_mcp.py` | 核心 Python 脚本，实现解析逻辑 |
-| `SKILL.md` | Claude Code 技能定义 |
+| `x2p_compdb_mcp.py` | 核心 Python 脚本，实现三个 MCP 工具 |
+| `SKILL.md` | Claude Code 技能定义（交互式工作流） |
+
+### MCP 工具清单
+
+| 工具名 | 功能 |
+|--------|------|
+| `scan_adk_projects` | 扫描 ADK 根目录，返回所有 .x2p 项目 |
+| `get_x2p_configs` | 解析 .x2p 文件，返回可用配置列表 |
+| `generate_optimized_clangd_config` | 核心配置生成器（含缓存） |
 
 ---
 
@@ -278,6 +332,7 @@ qualcomm-adk-plugins/
 1. **符号污染问题**：ADK 多个子项目有同名符号（如 `main`、`app_sm`），直接分析会产生冲突
 2. **配置冗余问题**：`compile_commands.json` 体积过大，clangd 加载缓慢
 3. **跨平台问题**：Windows 路径需要转换为 WSL 路径格式
+4. **交互选择问题**：多项目多配置需要手动指定
 
 ### 分层架构优势
 
@@ -285,7 +340,8 @@ qualcomm-adk-plugins/
 |------|------|------|
 | compile_commands.json | 文件列表 | 极简体积，快速加载 |
 | .clangd | 宏定义+路径注入 | 全局生效，动态隔离 |
-| 技能工作流 | 自动化流程 | 无需手动配置 |
+| 缓存机制 | 变更检测 | 极速跳过，避免重复计算 |
+| 技能工作流 | 自动化流程 | 无需手动配置，交互式选择 |
 
 ---
 
