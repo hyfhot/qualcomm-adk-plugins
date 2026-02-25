@@ -1,0 +1,15 @@
+{
+  "name": "qualcomm-adk-plugins",
+  "owner": {
+    "name": "ADK-Dev-Team"
+  },
+  "metadata": {
+    "description": "高通 ADK 开发专属私有插件市场"
+  },
+  "plugins": [
+    {
+      "name": "x2p-compdb-parser",
+      "source": "./plugins/x2p-parser"
+    }
+  ]
+}

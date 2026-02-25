@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "x2p-parser": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--with",
+        "mcp",
+        "${CLAUDE_PLUGIN_ROOT}/scripts/x2p_compdb_mcp.py"
+      ]
+    }
+  }
+}
